@@ -30,7 +30,7 @@
                 class="bg-red-600 text-white rounded h-12">CLEAR</button>
         </div>
 
-        <div id="result"></div>
+        <div id="result" class="max-w-xl overflow-y-scroll"></div>
         <video class="aspect-video w-full max-w-xl" id="player"
             controls></video>
 
@@ -45,12 +45,13 @@
 
                 if (!url) return alert("Really?!!")
 
-                const proxiedUrl = new URL(url)
+                const proxiedUrl = new URL("/m3u8-proxy", window.location.origin)
+                proxiedUrl.searchParams.set("url", url)
                 proxiedUrl.searchParams.set("headers", headers || "{}")
 
                 const resultDiv = document.getElementById("result");
                 resultDiv.style.display = "block";
-                resultDiv.innerHTML = `<span class="result-label">PROXIED_URL: </span><a href="/m3u8-proxy?url=${proxiedUrl.toString()}" target="_blank">/m3u8-proxy?url=${proxiedUrl.toString()}</a>`;
+                resultDiv.innerHTML = `<span class="result-label">PROXIED_URL: </span><a href="${proxiedUrl.toString()}" target="_blank">${proxiedUrl.toString()}</a>`;
 
                 const video = document.getElementById("player");
 
@@ -60,13 +61,13 @@
 
                 if (Hls.isSupported()) {
                     hls = new Hls();
-                    hls.loadSource(`/m3u8-proxy?url=${proxiedUrl.toString()}`);
+                    hls.loadSource(proxiedUrl.toString());
                     hls.attachMedia(video);
                     hls.on(Hls.Events.MANIFEST_PARSED, function () {
                         video.play();
                     });
                 } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-                    video.src = `/m3u8-proxy?url=${proxiedUrl.toString()}`;
+                    video.src = proxiedUrl.toString();
 
                     video.addEventListener("loadedmetadata", function () {
                         video.play();

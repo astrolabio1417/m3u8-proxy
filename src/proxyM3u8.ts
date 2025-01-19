@@ -1,5 +1,6 @@
 import { defaultHeaders, urlRegex } from './constants';
 import { fetch } from 'bun';
+import { removeNotAllowedHeaders } from './utils';
 
 /**
  * Proxies an M3U8 file by fetching it from the given URL and modifying its content.
@@ -17,6 +18,7 @@ export default async function proxyM3U8(url: string, customUrl: string, customHe
         const res = await fetch(url, { headers: { ...defaultHeaders, ...customHeaders } });
         if (!res.ok) throw new Error('Failed to fetch the m3u8 file');
         const text = await res.text();
+        removeNotAllowedHeaders(res.headers);
         const customM3u8 = proxyM3U8Text(text, url, customUrl, customHeaders);
         return { m3u8: customM3u8, res };
     } catch (e: unknown) {

@@ -1,18 +1,32 @@
 import Bun from 'bun';
-import { getFilenameFromUrl, getPublicUrlFromRequest, setResponseCorsHeaders } from './src/utils';
+import {
+    getFilenameFromUrl,
+    getOriginUrlFromRequest,
+    removeNotAllowedHeaders,
+    setResponseCorsHeaders
+} from './src/utils';
 import proxyM3U8 from './src/proxyM3u8';
 import { proxyTs } from './src/proxyTs';
+import { allowAllOrigins, allowedOrigins } from './src/constants';
 
 const server = Bun.serve({
     async fetch(req) {
         const url = new URL(req.url);
+
+        const origin = getOriginUrlFromRequest(req);
+
+        if (!allowAllOrigins && !allowedOrigins.includes(origin)) {
+            return new Response('Invalid Request!', { status: 400 });
+        }
 
         if (req.method !== 'GET') {
             return new Response('Method not allowed', { status: 405 });
         }
 
         if (url.pathname === '/') {
-            return new Response(Bun.file('src/index.html'));
+            const res = new Response(Bun.file('src/index.html'));
+            setResponseCorsHeaders(req, res);
+            return res;
         }
 
         const customHeadersText = url.searchParams.get('headers');
@@ -24,7 +38,7 @@ const server = Bun.serve({
         if (!targetUrl) return new Response('URL is required', { status: 400 });
 
         if (url.pathname === '/m3u8-proxy') {
-            const data = await proxyM3U8(targetUrl, getPublicUrlFromRequest(req), customHeaders);
+            const data = await proxyM3U8(targetUrl, process.env.PROXY_URL || origin, customHeaders);
 
             if (data.error || !data.res?.ok) {
                 return new Response(data.error, { status: 500 });
@@ -37,18 +51,19 @@ const server = Bun.serve({
                 }
             });
             data.res.headers.forEach((value, key) => res.headers.set(key, value));
-            setResponseCorsHeaders(res);
+            setResponseCorsHeaders(req, res);
             return res;
         }
 
         if (url.pathname === '/ts-proxy') {
             const tsRes = await proxyTs(targetUrl, customHeaders);
             if (!tsRes.ok) return new Response('Failed to fetch the ts file', { status: 500 });
+            removeNotAllowedHeaders(tsRes.headers);
             const res = new Response(tsRes.body, {
                 headers: { 'Content-Type': 'video/MP2T', 'Content-Disposition': `inline; filename="${filename}"` }
             });
             tsRes.headers.forEach((value, key) => res.headers.set(key, value));
-            setResponseCorsHeaders(res);
+            setResponseCorsHeaders(req, res);
             return res;
         }
 
