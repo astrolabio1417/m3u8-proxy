@@ -16,7 +16,7 @@ const server = Bun.serve({
         const origin = getOriginUrlFromRequest(req);
 
         if (!allowAllOrigins && !allowedOrigins.includes(origin)) {
-            return new Response('Invalid Request!', { status: 400 });
+            return new Response('Origin not allowed', { status: 403 });
         }
 
         if (req.method !== 'GET') {
