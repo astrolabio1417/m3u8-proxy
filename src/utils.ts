@@ -2,7 +2,7 @@ import { allowAllOrigins, allowedOrigins, notAllowedHeaders } from './constants'
 
 export function getOriginUrlFromRequest(request: Request) {
     let url = request.headers.get('Origin') || request.headers.get('referer') || request.headers.get('host') || '';
-    if (url && !url.startsWith('http')) url = `http://${url}`; // TODO: ALLOW TO AUTO SET HTTP/HTTPS FOR DOC/HTML VIEW!
+    if (url && !url.startsWith('http')) url = `${process.env.SCHEME || 'https'}://${url}`;
     const nUrl = new URL(url);
     return nUrl.origin;
 }
@@ -14,10 +14,12 @@ export function removeNotAllowedHeaders(headers: Headers) {
 
 export function setResponseCorsHeaders(req: Request, res: Response) {
     const origin = getOriginUrlFromRequest(req);
-    const allowedOrigin = allowedOrigins.find((o) => o === origin);
-
     const corsHeaders = {
-        'Access-Control-Allow-Origin': allowAllOrigins ? '*' : allowedOrigin || import.meta.env.ALLOWED_ORIGINS || '*',
+        'Access-Control-Allow-Origin': allowAllOrigins
+            ? '*'
+            : allowedOrigins.includes(origin)
+            ? origin
+            : import.meta.env.ALLOWED_ORIGINS || '*',
         'Access-Control-Allow-Methods': '*',
         'Access-Control-Allow-Headers': '*'
     };
