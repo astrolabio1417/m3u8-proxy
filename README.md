@@ -1,25 +1,43 @@
 # M3U8 Proxy Server
 
-M3U8 Proxy Server!
-
 To install dependencies:
 
 ```bash
-bun install
+bun install | npm install
 ```
 
 To run:
 
 ```bash
-bun run index.ts
+bun run dev | npm run dev
 ```
 
-This project was created using `bun init` in bun v1.0.7. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+## Docker
 
-## Envs
+### Build
 
-More info can be found in '.env' file
+To build the Docker image:
 
--   `PROXY_URL`: link of your proxy url (default http://localhost:9000)
--   `ALLOWED_ORIGINS`: origins you want to allow. separated with comma (default `http://localhost:9000,http://localhost`)
--   `PORT`: port number (default `9000`)
+```bash
+docker build -t video-proxy .
+```
+
+### Run
+
+To run the Docker container:
+
+```bash
+docker run -p 9000:9000 -e PORT=9000 -e PROXY_URL="http://localhost:9000" -e ALLOWED_ORIGINS="http://localhost:9000,http://localhost" video-proxy
+```
+
+## Environment Variables
+
+For more information, refer to the `.env.development` file.
+
+-   `PROXY_URL`: The URL of your proxy.
+-   `ALLOWED_ORIGINS`: Comma-separated list of allowed origins.
+-   `PORT`: The port number.
+
+## Setting Environment Variables
+
+You can find different ways to set up environment variables in the [Bun documentation](https://bun.sh/docs/runtime/env#setting-environment-variables).
