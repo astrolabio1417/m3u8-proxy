@@ -46,40 +46,16 @@ export function proxyM3U8Text(text: string, url: string, customUrl: string, cust
     const lines = m3u8.split('\n');
     const newLines = [];
 
-    if (m3u8.includes('RESOLUTION=')) {
-        for (const line of lines) {
-            if (!line.startsWith('#')) {
-                const uri = new URL(line, url);
-                const updatedM3u8Url = new URL(customUrl + '/m3u8-proxy');
-                const subM3u8WithUrl = new URL(uri.href);
-                subM3u8WithUrl.searchParams.set('headers', encodedCustomHeaders);
-                updatedM3u8Url.searchParams.set('url', subM3u8WithUrl.toString());
-                newLines.push(updatedM3u8Url.toString());
-                continue;
-            }
-
-            if (!line.startsWith('#EXT-X-KEY:')) {
-                newLines.push(line);
-                continue;
-            }
-
-            const updatedTsUrl = new URL(customUrl + '/ts-proxy');
-            updatedTsUrl.searchParams.set('url', encodeURIComponent(urlRegex.exec(line)?.[0] ?? ''));
-            updatedTsUrl.searchParams.set('headers', encodedCustomHeaders);
-            newLines.push(line.replace(urlRegex, updatedTsUrl.toString()));
-        }
-
-        return newLines.join('\n');
-    }
+    const urlPath = m3u8.includes('RESOLUTION=') ? '/m3u8-proxy' : '/ts-proxy';
 
     for (const line of lines) {
         if (!line.startsWith('#')) {
             const uri = new URL(line, url);
-            const updatedTsUrl = new URL(customUrl + '/ts-proxy');
-            const tsWithHeadersUrl = new URL(uri.href);
-            tsWithHeadersUrl.searchParams.set('headers', encodedCustomHeaders);
-            updatedTsUrl.searchParams.set('url', tsWithHeadersUrl.toString());
-            newLines.push(updatedTsUrl.toString());
+            const updatedM3u8Url = new URL(customUrl + urlPath);
+            const subM3u8WithUrl = new URL(uri.href);
+            subM3u8WithUrl.searchParams.set('headers', encodedCustomHeaders);
+            updatedM3u8Url.searchParams.set('url', subM3u8WithUrl.toString());
+            newLines.push(updatedM3u8Url.toString());
             continue;
         }
 
@@ -88,11 +64,10 @@ export function proxyM3U8Text(text: string, url: string, customUrl: string, cust
             continue;
         }
 
-        const tsUrl = new URL(customUrl);
-        tsUrl.searchParams.set('url', encodeURIComponent(urlRegex.exec(line)?.[0] ?? ''));
-        tsUrl.searchParams.set('headers', encodedCustomHeaders);
-        newLines.push(line.replace(urlRegex, tsUrl.toString()));
-        continue;
+        const updatedTsUrl = new URL(customUrl + '/ts-proxy');
+        updatedTsUrl.searchParams.set('url', encodeURIComponent(urlRegex.exec(line)?.[0] ?? ''));
+        updatedTsUrl.searchParams.set('headers', encodedCustomHeaders);
+        newLines.push(line.replace(urlRegex, updatedTsUrl.toString()));
     }
 
     return newLines.join('\n');
