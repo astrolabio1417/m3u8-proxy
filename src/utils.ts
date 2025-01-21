@@ -1,8 +1,17 @@
 import { allowAllOrigins, allowedOrigins, notAllowedHeaders } from './constants';
 
+const schemeLength = 'https://'.length;
+
 export function getOriginUrlFromRequest(request: Request) {
     let url = request.headers.get('Origin') || request.headers.get('referer') || request.headers.get('host') || '';
-    if (url && !url.startsWith('http')) url = `${process.env.SCHEME || 'https'}://${url}`;
+
+    if (!url.startsWith('http')) {
+        const allowedUrl = allowedOrigins.find(
+            (origin) => origin.endsWith(url) && origin.length - url.length <= schemeLength
+        );
+        url = allowedUrl || url;
+    }
+
     const nUrl = new URL(url);
     return nUrl.origin;
 }
