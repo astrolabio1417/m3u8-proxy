@@ -1,4 +1,4 @@
-export const notAllowedHeaders = [
+export const NOT_ALLOWED_HEADERS = [
     'Access-Control-Allow-Origin',
     'Access-Control-Allow-Methods',
     'Access-Control-Allow-Headers',
@@ -19,12 +19,15 @@ export const notAllowedHeaders = [
     'content-encoding'
 ];
 
-export const urlRegex = /https?:\/\/[^\""\s]+/g;
+export const URL_REGEX = /URI=\"(.*)\"/;
 
-export const defaultHeaders = {
+export const DEFAULT_HEADERS = {
     'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
 };
 
-export const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
-export const allowAllOrigins = allowedOrigins.includes('*');
+export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || [];
+export const IS_ALLOW_ALL_ORIGINS = ALLOWED_ORIGINS.includes('*');
+
+export const M3U8_PROXY_PATH = '/m3u8-proxy';
+export const TS_PROXY_PATH = '/ts-proxy';

@@ -7,7 +7,7 @@ import {
 } from './src/utils';
 import proxyM3U8 from './src/proxyM3u8';
 import { proxyTs } from './src/proxyTs';
-import { allowAllOrigins, allowedOrigins } from './src/constants';
+import { IS_ALLOW_ALL_ORIGINS, ALLOWED_ORIGINS, TS_PROXY_PATH, M3U8_PROXY_PATH } from './src/constants';
 
 const server = Bun.serve({
     async fetch(req) {
@@ -15,7 +15,7 @@ const server = Bun.serve({
 
         const origin = getOriginUrlFromRequest(req);
 
-        if (!allowAllOrigins && !allowedOrigins.includes(origin)) {
+        if (!IS_ALLOW_ALL_ORIGINS && !ALLOWED_ORIGINS.includes(origin)) {
             return new Response('Origin not allowed', { status: 403 });
         }
 
@@ -37,7 +37,7 @@ const server = Bun.serve({
 
         if (!targetUrl) return new Response('URL is required', { status: 400 });
 
-        if (url.pathname === '/m3u8-proxy') {
+        if (url.pathname === M3U8_PROXY_PATH) {
             const data = await proxyM3U8(targetUrl, process.env.PROXY_URL || origin, customHeaders);
 
             if (data.error || !data.res?.ok) {
@@ -55,7 +55,7 @@ const server = Bun.serve({
             return res;
         }
 
-        if (url.pathname === '/ts-proxy') {
+        if (url.pathname === TS_PROXY_PATH) {
             const tsRes = await proxyTs(targetUrl, customHeaders);
             if (!tsRes.ok) return new Response('Failed to fetch the ts file', { status: 500 });
             removeNotAllowedHeaders(tsRes.headers);
