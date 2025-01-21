@@ -1,6 +1,6 @@
 import { DEFAULT_HEADERS, M3U8_PROXY_PATH, TS_PROXY_PATH, URL_REGEX } from './constants';
 import { fetch } from 'bun';
-import { removeNotAllowedHeaders } from './utils';
+import { getProxiedUrl as getProxiedUrl, removeNotAllowedHeaders } from './utils';
 
 /**
  * Proxies an M3U8 file by fetching it from the given URL and modifying its content.
@@ -38,26 +38,20 @@ export default async function proxyM3U8(url: string, customUrl: string, customHe
  * @returns the modified M3U8 text
  */
 export function proxyM3U8Text(text: string, url: string, customUrl: string, customHeaders: HeadersInit = {}) {
-    const m3u8 = text
-        .split('\n')
-        .filter((line) => !line.startsWith('#EXT-X-MEDIA:TYPE=AUDIO') && line !== '')
-        .join('\n');
-    const encodedCustomHeaders = encodeURIComponent(JSON.stringify(customHeaders));
-    const lines = m3u8.split('\n');
+    const lines = text.split('\n').filter((line) => !line.startsWith('#EXT-X-MEDIA:TYPE=AUDIO') && line !== '');
     const newLines = [];
-    const urlPath = m3u8.includes('RESOLUTION=') ? M3U8_PROXY_PATH : TS_PROXY_PATH;
-
+    const urlPath = text.includes('RESOLUTION=') ? M3U8_PROXY_PATH : TS_PROXY_PATH;
     const SUBTITLES = '#EXT-X-MEDIA:TYPE=SUBTITLES';
     const KEY = '#EXT-X-KEY';
 
     for (const line of lines) {
         if (line.startsWith(SUBTITLES) || line.startsWith(KEY)) {
-            const uri = URL_REGEX.exec(line)?.[1] ?? '';
-            const proxiedUrl = new URL(customUrl + (line.startsWith(SUBTITLES) ? M3U8_PROXY_PATH : TS_PROXY_PATH));
-            const fullUri = uri.startsWith('http') ? uri : new URL(uri, url).toString();
-            proxiedUrl.searchParams.set('url', encodeURIComponent(fullUri));
-            proxiedUrl.searchParams.set('headers', encodedCustomHeaders);
-            newLines.push(line.replace(uri, proxiedUrl.toString()));
+            const uriMatch = URL_REGEX.exec(line);
+            const uri = uriMatch ? uriMatch[1] : '';
+            const originalUrl = uri.startsWith('http') ? uri : new URL(uri, url).toString();
+            const proxyBaseUrl = customUrl + (line.startsWith(SUBTITLES) ? M3U8_PROXY_PATH : TS_PROXY_PATH);
+            const proxiedUrl = getProxiedUrl(originalUrl, proxyBaseUrl, customHeaders).toString();
+            newLines.push(line.replace(uri, proxiedUrl));
             continue;
         }
 
@@ -66,11 +60,10 @@ export function proxyM3U8Text(text: string, url: string, customUrl: string, cust
             continue;
         }
 
-        const originalUrl = new URL(line, url);
-        const proxiedUrl = new URL(customUrl + urlPath);
-        proxiedUrl.searchParams.set('url', originalUrl.toString());
-        proxiedUrl.searchParams.set('headers', encodedCustomHeaders);
-        newLines.push(proxiedUrl.toString());
+        const proxyBaseUrl = customUrl + urlPath;
+        const originalUrl = new URL(line, url).toString();
+        const proxiedUrl = getProxiedUrl(originalUrl, proxyBaseUrl, customHeaders).toString();
+        newLines.push(proxiedUrl);
     }
 
     return newLines.join('\n');

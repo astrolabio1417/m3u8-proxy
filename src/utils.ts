@@ -43,3 +43,19 @@ export function getFilenameFromUrl(url: string) {
     const length = split.length;
     return split[length - 1];
 }
+
+/**
+ * Generates a proxied URL with the original URL and headers encoded as query parameters.
+ *
+ * @param url - The original URL to be proxied.
+ * @param customUrl - The base URL of the proxy server.
+ * @param headers - Optional headers to be included in the proxied request.
+ * @returns A new URL object with the original URL and headers encoded as query parameters.
+ */
+export function getProxiedUrl(url: string, customUrl: string, headers: HeadersInit = {}) {
+    const originalUrl = new URL(url);
+    const proxiedUrl = new URL(customUrl);
+    proxiedUrl.searchParams.set('url', originalUrl.toString());
+    proxiedUrl.searchParams.set('headers', encodeURIComponent(JSON.stringify(headers)));
+    return proxiedUrl;
+}
