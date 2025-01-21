@@ -47,7 +47,7 @@ const server = Bun.serve({
             const res = new Response(data.m3u8, {
                 headers: {
                     'Content-Type': 'application/vnd.apple.mpegurl',
-                    'Content-Disposition': `inline; filename="${filename}"`
+                    'Content-Disposition': `attachment; filename="${filename}"`
                 }
             });
             data.res.headers.forEach((value, key) => res.headers.set(key, value));
@@ -60,7 +60,7 @@ const server = Bun.serve({
             if (!tsRes.ok) return new Response('Failed to fetch the ts file', { status: 500 });
             removeNotAllowedHeaders(tsRes.headers);
             const res = new Response(tsRes.body, {
-                headers: { 'Content-Type': 'video/MP2T', 'Content-Disposition': `inline; filename="${filename}"` }
+                headers: { 'Content-Type': 'video/MP2T', 'Content-Disposition': `attachment; filename="${filename}"` }
             });
             tsRes.headers.forEach((value, key) => res.headers.set(key, value));
             setResponseCorsHeaders(req, res);
