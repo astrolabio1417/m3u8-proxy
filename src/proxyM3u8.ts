@@ -1,4 +1,4 @@
-import { defaultHeaders, urlRegex } from './constants';
+import { DEFAULT_HEADERS, M3U8_PROXY_PATH, TS_PROXY_PATH, URL_REGEX } from './constants';
 import { fetch } from 'bun';
 import { removeNotAllowedHeaders } from './utils';
 
@@ -15,7 +15,7 @@ import { removeNotAllowedHeaders } from './utils';
  */
 export default async function proxyM3U8(url: string, customUrl: string, customHeaders: HeadersInit = {}) {
     try {
-        const res = await fetch(url, { headers: { ...defaultHeaders, ...customHeaders } });
+        const res = await fetch(url, { headers: { ...DEFAULT_HEADERS, ...customHeaders } });
         if (!res.ok) throw new Error('Failed to fetch the m3u8 file');
         const text = await res.text();
         removeNotAllowedHeaders(res.headers);
@@ -45,29 +45,32 @@ export function proxyM3U8Text(text: string, url: string, customUrl: string, cust
     const encodedCustomHeaders = encodeURIComponent(JSON.stringify(customHeaders));
     const lines = m3u8.split('\n');
     const newLines = [];
+    const urlPath = m3u8.includes('RESOLUTION=') ? M3U8_PROXY_PATH : TS_PROXY_PATH;
 
-    const urlPath = m3u8.includes('RESOLUTION=') ? '/m3u8-proxy' : '/ts-proxy';
+    const SUBTITLES = '#EXT-X-MEDIA:TYPE=SUBTITLES';
+    const KEY = '#EXT-X-KEY';
 
     for (const line of lines) {
-        if (!line.startsWith('#')) {
-            const uri = new URL(line, url);
-            const updatedM3u8Url = new URL(customUrl + urlPath);
-            const subM3u8WithUrl = new URL(uri.href);
-            subM3u8WithUrl.searchParams.set('headers', encodedCustomHeaders);
-            updatedM3u8Url.searchParams.set('url', subM3u8WithUrl.toString());
-            newLines.push(updatedM3u8Url.toString());
+        if (line.startsWith(SUBTITLES) || line.startsWith(KEY)) {
+            const uri = URL_REGEX.exec(line)?.[1] ?? '';
+            const proxiedUrl = new URL(customUrl + (line.startsWith(SUBTITLES) ? M3U8_PROXY_PATH : TS_PROXY_PATH));
+            const fullUri = uri.startsWith('http') ? uri : new URL(uri, url).toString();
+            proxiedUrl.searchParams.set('url', encodeURIComponent(fullUri));
+            proxiedUrl.searchParams.set('headers', encodedCustomHeaders);
+            newLines.push(line.replace(uri, proxiedUrl.toString()));
             continue;
         }
 
-        if (!line.startsWith('#EXT-X-KEY:')) {
+        if (line.startsWith('#')) {
             newLines.push(line);
             continue;
         }
 
-        const updatedTsUrl = new URL(customUrl + '/ts-proxy');
-        updatedTsUrl.searchParams.set('url', encodeURIComponent(urlRegex.exec(line)?.[0] ?? ''));
-        updatedTsUrl.searchParams.set('headers', encodedCustomHeaders);
-        newLines.push(line.replace(urlRegex, updatedTsUrl.toString()));
+        const originalUrl = new URL(line, url);
+        const proxiedUrl = new URL(customUrl + urlPath);
+        proxiedUrl.searchParams.set('url', originalUrl.toString());
+        proxiedUrl.searchParams.set('headers', encodedCustomHeaders);
+        newLines.push(proxiedUrl.toString());
     }
 
     return newLines.join('\n');
