@@ -25,7 +25,7 @@ const server = Bun.serve({
 
         if (url.pathname === '/') {
             const res = new Response(Bun.file('src/index.html'));
-            setResponseCorsHeaders(req, res);
+            setResponseCorsHeaders(res, origin);
             return res;
         }
 
@@ -51,7 +51,7 @@ const server = Bun.serve({
                 }
             });
             data.res.headers.forEach((value, key) => res.headers.set(key, value));
-            setResponseCorsHeaders(req, res);
+            setResponseCorsHeaders(res, origin);
             return res;
         }
 
@@ -63,7 +63,7 @@ const server = Bun.serve({
                 headers: { 'Content-Type': 'video/MP2T', 'Content-Disposition': `attachment; filename="${filename}"` }
             });
             tsRes.headers.forEach((value, key) => res.headers.set(key, value));
-            setResponseCorsHeaders(req, res);
+            setResponseCorsHeaders(res, origin);
             return res;
         }
 

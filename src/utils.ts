@@ -21,8 +21,7 @@ export function removeNotAllowedHeaders(headers: Headers) {
     return headers;
 }
 
-export function setResponseCorsHeaders(req: Request, res: Response) {
-    const origin = getOriginUrlFromRequest(req);
+export function setResponseCorsHeaders(res: Response, origin: string) {
     const corsHeaders = {
         'Access-Control-Allow-Origin': IS_ALLOW_ALL_ORIGINS
             ? '*'
