@@ -22,12 +22,36 @@ To build the Docker image:
 docker build -t video-proxy .
 ```
 
+To build the Docker image with vpn:
+
+```bash
+docker build -f dockerfile.vpn -t video-proxy-with-vpn .
+```
+
 ### Run
 
 To run the Docker container:
 
 ```bash
 docker run -p 9000:9000 -e PORT=9000 -e PROXY_URL="http://localhost:9000" -e ALLOWED_ORIGINS="http://localhost:9000,http://localhost" video-proxy
+```
+
+To run the Docker container with vpn:
+
+```bash
+
+docker run -p 9000:9000 \
+-e PORT=9000 \
+-e PROXY_URL="http://localhost:9000" \
+-e ALLOWED_ORIGINS="http://localhost:9000,http://localhost" \
+--device-cgroup-rule 'c 10:200 rwm' \
+--cap-add MKNOD \
+--cap-add AUDIT_WRITE \
+--cap-add NET_ADMIN \
+--sysctl net.ipv6.conf.all.disable_ipv6=0 \
+--sysctl net.ipv4.conf.all.src_valid_mark=1 \
+-v ./data:/var/lib/cloudflare-warp \
+video-proxy-with-vpn
 ```
 
 ## Environment Variables
