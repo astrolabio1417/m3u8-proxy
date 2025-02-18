@@ -23,7 +23,7 @@ jobs:
 
             - name: Generate Docker tag
               id: tag
-              run: echo "tag=ghcr.io/astrolabio1417/m3u8-proxy:$(date +%Y%m%d%H%M)" >> "$GITHUB_OUTPUT"
+              run: echo "tag=astrolabio1417/m3u8-proxy:$(date +%Y%m%d%H%M)" >> "$GITHUB_OUTPUT"
 
             - name: Build and push
               uses: docker/build-push-action@v6
